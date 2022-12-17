@@ -1,0 +1,252 @@
+---
+title: "Relationship between Amount Spent on Wine and Other Aspects"
+date: "2021/11/9"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r message=FALSE, warning=FALSE, ,echo=FALSE, include=FALSE, paged.print=FALSE}
+wd <- getwd()
+setwd(wd) ## set working directory
+library(lubridate)
+library(tidyverse)
+library(caret)
+```
+
+
+## Group Members:
+
+Jiapan Wang  #29322674\
+Hanliang Liu #86009776\
+Catherine Cai #52204310\
+Jack Guo #57752750
+
+## Motivation:
+Last month there was a tragic car accident near UBC campus late at night, which might have been caused by a possibly drunk driver. This dataset provides the amount spent on wine by customers and other aspects, for example, Birth Year and the Income of customers. It would give help to know the relationship between predictor variables and purchasing power in future careers.
+
+
+
+## Introduction:
+In the last 70 years, the development of economics has recovered from the second World War. The dramatic increase in this period was never observed in history before due to the rapid development of industry and globalization. Meanwhile, the consumption power of citizens has increased with the development of economics. Therefore, we are interested in finding which set of factors has a great impact on the consumption power of customers, and in this study we will focus on the amount spent on wine, which represents the consumption power of customers. Our study is observational in nature. It is unfortunately not possible to randomly allocate experiment groups where some countries allocate more resources on certain factors while other countries do not.
+
+
+We have chosen the “Customer Personality Analysis” hosted on Kaggle.com. This dataset is a detailed analysis of a company’s ideal customers. It helps a business to better understand its customers and makes it easier for them to modify products according to the specific needs, behaviors and concerns of different types of customers. The response variable chosen from this dataset is MntWines, amount spent on wine in the last 2 years, which is measured in dollars. 
+
+
+
+
+## Data analysis:
+### The description of variables we may use in analysis\
+ID: Customer's unique identifier\
+Year_Birth: Customer's birth year\
+Education: Customer's education level\
+Marital_Status: Customer's marital status\
+Income: Customer's yearly household income\
+Kidhome: Number of children in customer's household\
+Teenhome: Number of teenagers in customer's household\
+Recency: Number of days since customer's last purchase\
+Complain: 1 if customer complained in the last 2 years, 0 otherwise\
+MntFruits: Amount spent on fruits in last 2 years\
+MntMeatProducts: Amount spent on meat in last 2 years\
+MntFishProducts: Amount spent on fish in last 2 years\
+MntSweetProducts: Amount spent on sweets in last 2 years\
+MntGoldProds: Amount spent on gold in last 2 years\
+MntWines: Amount spent on wine in last 2 years\
+NumDealsPurchases: Number of purchases made with a discount\
+\
+\
+### Notice: as mentioned in the requirement, we made far more plots than we will keep.\
+\
+We explore the relationship between the response variable MntWines, which indicates amount spent on wine in last 2 years, and the other explanatory variables.\
+\
+First, we plot MntWines against each plausible explanatory variable as follows:\
+\
+
+```{r echo=FALSE, out.width="50%"}
+wine <- read.delim("./marketing_campaign.csv")
+
+qplot(wine$Year_Birth
+      , wine$MntWines * 0.001,
+      main = "Birth Year vs Money Spent on Wine in 1000 dollars",
+      xlab = "Customer's birth year",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$Education
+      , wine$MntWines * 0.001,
+      main = "Education vs Money Spent on Wine in 1000 dollars",
+      xlab = "Customer's education level",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$Marital_Status
+      , wine$MntWines * 0.001,
+      main = "Marital Status vs Money Spent on Wine in 1000 dollars",
+      xlab = "Customer's marital status",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$Income * 0.001
+      , wine$MntWines * 0.001,
+      xlim = c(0,200),
+      main = "Income vs Money Spent on Wine in 1000 dollars",
+      xlab = "Customer's yearly household income",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$Kidhome
+      , wine$MntWines * 0.001,
+      main = "Number of Kids vs Money Spent on Wine in 1000 dollars",
+      xlab = "Number of children in customer's household",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$Teenhome
+      , wine$MntWines * 0.001,
+      main = "Number of teenagers vs Money Spent on Wine in 1000 dollars",
+      xlab = "Number of teenagers in customer's household",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$Recency
+      , wine$MntWines * 0.001,
+      main = "Frequency of Purchase vs Money Spent on Wine in 1000 dollars",
+      xlab = "Number of teenagers in customer's household",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$Complain
+      , wine$MntWines * 0.001,
+      main = "Complain vs Money Spent on Wine in 1000 dollars",
+      xlab = " 1 if customer complained in the last 2 years, 0 otherwise",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$MntFruits * 0.001
+      , wine$MntWines * 0.001,
+      main = "Money Spent on Fruits vs on Wine in 1000 dollars",
+      xlab = "Amount spent on fruits in last 2 years",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$MntMeatProducts * 0.001
+      , wine$MntWines * 0.001,
+      main = "Money Spent on Meat Product vs on Wine in 1000 dollars",
+      xlab = "Amount spent on meat in last 2 years",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$MntFishProducts * 0.001
+      , wine$MntWines * 0.001,
+      main = "Money Spent on Fish Product vs on Wine in 1000 dollars",
+      xlab = "Amount spent on fish in last 2 years",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$MntSweetProducts * 0.001
+      , wine$MntWines * 0.001,
+      main = "Money Spent on Sweet Product vs on Wine in 1000 dollars",
+      xlab = "Amount spent on sweets in last 2 years",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$MntSweetProducts * 0.001
+      , wine$MntWines * 0.001,
+      main = "Money Spent on Sweet Product vs on Wine in 1000 dollars",
+      xlab = "Amount spent on sweets in last 2 years",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$MntGoldProds * 0.001
+      , wine$MntWines * 0.001,
+      main = "Money Spent on Gold Product vs on Wine in 1000 dollars",
+      xlab = "Amount spent on gold in last 2 years",
+      ylab = "Amount spent on wine")
+
+
+qplot(wine$NumDealsPurchases * 0.001
+      , wine$MntWines * 0.001,
+      main = "MNumber of purchases made with a discount vs Mone Spent on Wine in 1000 dollars",
+      xlab = "Number of purchases made with a discount",
+      ylab = "Amount spent on wine")
+
+
+
+```
+\
+Then, we plot pairwise correlation to have a glance.\
+\
+``` {r}
+
+pairs(wine[,c(2,5,9,11,12,13,14,15,16)],
+      pch = 21,                 # Pch symbol
+      main = "Correlations between explanatory variables",
+      row1attop = TRUE,         # If FALSE, changes the direction of the diagonal
+      gap = 1,                  # Distance between subplots
+      cex.labels = NULL,        # Size of the diagonal text
+      font.labels = 1)
+
+```
+
+
+\
+Then, we apply model selecting methods to explore the prediction risk (Cp, AIC):\
+\
+
+```{r echo=FALSE}
+library(olsrr)
+model1 <- lm(MntWines ~ Year_Birth + Education +
+               Marital_Status  + Income + Kidhome +
+               Teenhome + Recency + MntFruits +
+               MntMeatProducts + MntFishProducts + MntSweetProducts +
+               MntGoldProds + NumDealsPurchases, data = wine)
+ols_step_both_p(model1)
+
+
+```
+\
+It seems like "MntSweetProducts" has the smallest risk.\
+We apply best subsets regression method, and focus on $Cp$ and $AIC$, and temporarily ignore the other columns in the output , also the off-screen part.\
+\
+
+```{r}
+model2 <- lm(MntWines ~ Income + MntMeatProducts + Kidhome +
+               Education + MntGoldProds + NumDealsPurchases + MntSweetProducts, data = wine)
+k <- ols_step_best_subset(model2)
+k
+```
+
+
+\
+Next, we plot risk against different possible models (in the table above) as follows:\
+\
+
+```{r fig.align="center"}
+
+plot(k)
+
+```
+\
+We conclude that a combination of "Income", "MntMeatProducts", "Kidhome", "Education", "MntGoldProds", "NumDealsPurchases", and "MntSweetProducts", is the best choice due to its lowest $Cp$ and $AIC$.\
+\
+Below, we use the selected variables above to fit a ordinary linear model, and analyze it by shrinkage methods Ridge and Lasso.
+\
+
+```{r}
+library(glmnet)
+ols <- lm(MntWines ~ Income + MntMeatProducts + Kidhome + Education + 
+             MntGoldProds + NumDealsPurchases + MntSweetProducts,
+          data = wine)
+x <- model.matrix(ols) 
+y <- wine$MntWines[-ols$na.action] # remove those observations with missing values. glmnet() hates those. They are already dropped in x.
+ridge <- cv.glmnet(x, y, alpha = 0)
+lasso <- cv.glmnet(x, y)
+plot(lasso, main = "CV score for Lasso")
+```

@@ -1,0 +1,133 @@
+---
+title: "Relationship between Amount Spent on Wine and Other Aspects - Checkpoint 3"
+date: "2021/12/7"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r message=FALSE, warning=FALSE, ,echo=FALSE, include=FALSE, paged.print=FALSE}
+wd <- getwd()
+setwd(wd) ## set working directory
+library(lubridate)
+library(tidyverse)
+library(caret)
+```
+
+
+**This document is made for displaying the code we used, and the formal final report is the other file.\
+
+
+
+```{r echo=FALSE, out.width="50%"}
+wine <- read.delim("./marketing_campaign.csv")
+
+
+qplot(wine$Income * 0.001
+      , wine$MntWines * 0.001,
+      xlim = c(0,200),
+      main = "Income vs Money Spent on Wine in 1000 dollars",
+      xlab = "Customer's yearly household income",
+      ylab = "Amount spent on wine")
+
+
+
+qplot(wine$MntMeatProducts * 0.001
+      , wine$MntWines * 0.001,
+      main = "Money Spent on Meat Product vs on Wine in 1000 dollars",
+      xlab = "Amount spent on meat in last 2 years",
+      ylab = "Amount spent on wine")
+
+
+
+```
+
+``` {r, out.width="150%"}
+newwine <- wine[,c(2,5,9,10,11,12,13,14,15,16)]
+cormat <- round(cor(newwine),2)
+library(reshape2)
+melted_cormat <- melt(cormat)
+head(melted_cormat)
+
+library(ggplot2)
+ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile()
+
+```
+
+
+
+
+```{r echo=FALSE}
+library(olsrr)
+model1 <- lm(MntWines ~ Year_Birth + Education +
+               Marital_Status  + Income + Kidhome +
+               Teenhome + Recency + MntFruits +
+               MntMeatProducts + MntFishProducts + MntSweetProducts +
+               MntGoldProds + NumDealsPurchases, data = wine)
+ols_step_both_p(model1)
+
+
+```
+\
+It seems like "MntSweetProducts" has the smallest risk.\
+We apply best subsets regression method, and focus on $Cp$ and $AIC$, and temporarily ignore the other columns in the output , also the off-screen part.\
+\
+
+```{r}
+library(tidyverse)
+library(mgcv)
+library(randomForest)
+library(testthat)
+ntrees <- 200
+rf <- randomForest(MntWines ~.,
+                   data = newwine,
+                   ntree = ntrees,
+                   na.action = na.omit,
+                   type = classification)
+print(rf)
+varImpPlot(rf, main = "Variable Importance plot")
+
+```
+
+
+```{r}
+model2 <- lm(MntWines ~ Income + MntMeatProducts + Kidhome +
+               Education + MntGoldProds + NumDealsPurchases + MntSweetProducts, data = wine)
+k <- ols_step_best_subset(model2)
+k
+```
+
+
+\
+Next, we plot risk against different possible models (in the table above) as follows:\
+\
+
+```{r fig.align="center"}
+
+plot(k)
+
+```
+\
+We conclude that a combination of "Income", "MntMeatProducts", "Kidhome", "Education", "MntGoldProds", "NumDealsPurchases", and "MntSweetProducts", is the best choice due to its lowest $Cp$ and $AIC$.\
+\
+Below, we use the selected variables above to fit a ordinary linear model, and analyze it by shrinkage methods Ridge and Lasso.
+\
+
+```{r}
+library(glmnet)
+ols <- lm(MntWines ~ Income + MntMeatProducts + Kidhome + Education + 
+             MntGoldProds + NumDealsPurchases + MntSweetProducts,
+          data = wine)
+x <- model.matrix(ols) 
+y <- wine$MntWines[-ols$na.action] # remove those observations with missing values. glmnet() hates those. They are already dropped in x.
+ridge <- cv.glmnet(x, y, alpha = 0)
+lasso <- cv.glmnet(x, y)
+plot(lasso, main = "CV score for Lasso")
+```
