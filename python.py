@@ -1,2 +1,2 @@
 # Display
-print("new")
+print("New")
